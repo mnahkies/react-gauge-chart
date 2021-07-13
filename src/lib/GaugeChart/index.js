@@ -324,7 +324,9 @@ const renderChart = (
       return d.data.color;
     });
 
-  drawNeedle(
+
+
+  (props.needleShape === 'circle' ? drawCircleNeedle : drawNeedle)(
     resize,
     prevProps,
     props,
@@ -357,6 +359,63 @@ const getColors = (props, nbArcsToDisplay) => {
 };
 
 //If 'resize' is true then the animation does not play
+
+const drawCircleNeedle = (
+    resize,
+    prevProps,
+    props,
+    width,
+    needle,
+    container,
+    outerRadius,
+    g
+) => {
+  const { percent, needleColor, needleBaseColor, hideText, animate } = props;
+  var needleRadius = 15 * (width.current / 500);
+  var needleStroke = 0.4 * needleRadius
+  const prevPercent = prevProps ? prevProps.percent : 0;
+
+    let needleLocation = calculateCircleNeedleLocation(prevPercent || percent, outerRadius, width);
+    needle.current
+        .append("circle")
+        .attr("cx", needleLocation[0])
+        .attr("cy", needleLocation[1])
+        .attr("r", needleRadius)
+        .attr('stroke', needleColor)
+        .attr('stroke-width', needleStroke)
+        .attr("fill", needleBaseColor);
+
+  if (!hideText) {
+    addText(percent, props, outerRadius, width, g);
+  }
+  //Rotate the needle
+  if (!resize && animate) {
+    needle.current
+        .transition()
+        .delay(props.animDelay)
+        .ease(easeElastic)
+        .duration(props.animateDuration)
+        .tween("progress", function () {
+          const currentPercent = interpolateNumber(prevPercent, percent);
+          return function (percentOfPercent) {
+            const progress = currentPercent(percentOfPercent);
+            let centerPoint = calculateCircleNeedleLocation(progress, outerRadius, width);
+
+            return container.current
+                .select(`.needle circle`)
+                .attr("cx", centerPoint[0])
+                .attr("cy", centerPoint[1]);
+          };
+        });
+  } else {
+    let centerPoint = calculateCircleNeedleLocation(percent, outerRadius, width);
+    container.current
+        .select(".needle circle")
+        .attr("cx", centerPoint[0])
+        .attr("cy", centerPoint[1]);
+  }
+}
+
 const drawNeedle = (
   resize,
   prevProps,
@@ -408,6 +467,19 @@ const drawNeedle = (
   }
 };
 
+const calculateCircleNeedleLocation = (percent, outerRadius, width) => {
+  var needleLength = outerRadius.current * 0.9, //TODO: Maybe it should be specified as a percentage of the arc radius?
+      needleRadius = 15 * (width.current / 500),
+      theta = percentToRad(percent),
+      centerPoint = [0, -needleRadius / 2],
+      topPoint = [
+        centerPoint[0] - needleLength * Math.cos(theta),
+        centerPoint[1] - needleLength * Math.sin(theta),
+      ];
+
+  return topPoint;
+}
+
 const calculateRotation = (percent, outerRadius, width) => {
   var needleLength = outerRadius.current * 0.55, //TODO: Maybe it should be specified as a percentage of the arc radius?
     needleRadius = 15 * (width.current / 500),
@@ -447,7 +519,7 @@ const addText = (percentage, props, outerRadius, width, g) => {
     .attr(
       "transform",
       `translate(${outerRadius.current}, ${
-        outerRadius.current / 2 + textPadding
+        outerRadius.current - textPadding
       })`
     )
     .append("text")
