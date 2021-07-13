@@ -1,5 +1,7 @@
 "use strict";
 
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -17,7 +19,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 /*
 GaugeChart creates a gauge chart using D3
@@ -56,44 +58,7 @@ var GaugeChart = function GaugeChart(props) {
   var pieChart = (0, _react.useRef)((0, _d.pie)());
   var prevProps = (0, _react.useRef)(props);
   var selectedRef = (0, _react.useRef)({});
-  (0, _react.useEffect)(function () {
-    setArcData(props, nbArcsToDisplay, colorArray, arcData);
-    container.current = (0, _d.select)(selectedRef); //Initialize chart
-
-    initChart();
-  }, []);
-  (0, _customHooks.default)(function () {
-    if (props.nrOfLevels || prevProps.current.arcsLength.every(function (a) {
-      return props.arcsLength.includes(a);
-    }) || prevProps.current.colors.every(function (a) {
-      return props.colors.includes(a);
-    })) {
-      setArcData(props, nbArcsToDisplay, colorArray, arcData);
-    } //Initialize chart
-    // Always redraw the chart, but potentially do not animate it
-
-
-    var resize = !animateNeedleProps.some(function (key) {
-      return prevProps.current[key] !== props[key];
-    });
-    initChart(true, resize, prevProps.current);
-    prevProps.current = props;
-  }, [props.nrOfLevels, props.arcsLength, props.colors, props.percent, props.needleColor, props.needleBaseColor]);
-
-  var handleResize = function handleResize() {
-    var resize = true;
-    renderChart(resize, prevProps, width, margin, height, outerRadius, g, doughnut, arcChart, needle, pieChart, svg, props, container, arcData);
-  };
-
-  (0, _react.useEffect)(function () {
-    //Set up resize event listener to re-render the chart everytime the window is resized
-    window.addEventListener('resize', handleResize);
-    return function () {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [handleResize]);
-
-  var initChart = function initChart(update) {
+  var initChart = (0, _react.useCallback)(function (update) {
     var resize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
     var prevProps = arguments.length > 2 ? arguments[2] : undefined;
 
@@ -116,12 +81,46 @@ var GaugeChart = function GaugeChart(props) {
 
     needle.current = g.current.append("g").attr("class", "needle");
     renderChart(resize, prevProps, width, margin, height, outerRadius, g, doughnut, arcChart, needle, pieChart, svg, props, container, arcData);
-  };
+  }, [props]);
+  (0, _react.useLayoutEffect)(function () {
+    setArcData(props, nbArcsToDisplay, colorArray, arcData);
+    container.current = (0, _d.select)(selectedRef); //Initialize chart
 
+    initChart();
+  }, [props, initChart]);
+  (0, _customHooks.default)(function () {
+    if (props.nrOfLevels || prevProps.current.arcsLength.every(function (a) {
+      return props.arcsLength.includes(a);
+    }) || prevProps.current.colors.every(function (a) {
+      return props.colors.includes(a);
+    })) {
+      setArcData(props, nbArcsToDisplay, colorArray, arcData);
+    } //Initialize chart
+    // Always redraw the chart, but potentially do not animate it
+
+
+    var resize = !animateNeedleProps.some(function (key) {
+      return prevProps.current[key] !== props[key];
+    });
+    initChart(true, resize, prevProps.current);
+    prevProps.current = props;
+  }, [props.nrOfLevels, props.arcsLength, props.colors, props.percent, props.needleColor, props.needleBaseColor]);
+  (0, _react.useEffect)(function () {
+    var handleResize = function handleResize() {
+      var resize = true;
+      renderChart(resize, prevProps, width, margin, height, outerRadius, g, doughnut, arcChart, needle, pieChart, svg, props, container, arcData);
+    }; //Set up resize event listener to re-render the chart everytime the window is resized
+
+
+    window.addEventListener("resize", handleResize);
+    return function () {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [props]);
   var id = props.id,
       style = props.style,
       className = props.className;
-  return /*#__PURE__*/_react.default.createElement("div", {
+  return _react.default.createElement("div", {
     id: id,
     className: className,
     style: style,
@@ -174,7 +173,8 @@ GaugeChart.propTypes = {
   animate: _propTypes.default.bool,
   formatTextValue: _propTypes.default.func,
   fontSize: _propTypes.default.string,
-  animateDuration: _propTypes.default.number
+  animateDuration: _propTypes.default.number,
+  animDelay: _propTypes.default.number
 }; // This function update arc's datas when component is mounting or when one of arc's props is updated
 
 var setArcData = function setArcData(props, nbArcsToDisplay, colorArray, arcData) {
@@ -223,7 +223,7 @@ var renderChart = function renderChart(resize, prevProps, width, margin, height,
   arcPaths.append("path").attr("d", arcChart.current).style("fill", function (d) {
     return d.data.color;
   });
-  drawNeedle(resize, prevProps, props, width, needle, container, outerRadius, g); //Translate the needle starting point to the middle of the arc
+  (props.needleShape === 'circle' ? drawCircleNeedle : drawNeedle)(resize, prevProps, props, width, needle, container, outerRadius, g); //Translate the needle starting point to the middle of the arc
 
   needle.current.attr("transform", "translate(" + outerRadius.current + ", " + outerRadius.current + ")");
 }; //Depending on the number of levels in the chart
@@ -243,6 +243,38 @@ var getColors = function getColors(props, nbArcsToDisplay) {
   return colorArray;
 }; //If 'resize' is true then the animation does not play
 
+
+var drawCircleNeedle = function drawCircleNeedle(resize, prevProps, props, width, needle, container, outerRadius, g) {
+  var percent = props.percent,
+      needleColor = props.needleColor,
+      needleBaseColor = props.needleBaseColor,
+      hideText = props.hideText,
+      animate = props.animate;
+  var needleRadius = 15 * (width.current / 500);
+  var needleStroke = 0.4 * needleRadius;
+  var prevPercent = prevProps ? prevProps.percent : 0;
+  var needleLocation = calculateCircleNeedleLocation(prevPercent || percent, outerRadius, width);
+  needle.current.append("circle").attr("cx", needleLocation[0]).attr("cy", needleLocation[1]).attr("r", needleRadius).attr('stroke', needleColor).attr('stroke-width', needleStroke).attr("fill", needleBaseColor);
+
+  if (!hideText) {
+    addText(percent, props, outerRadius, width, g);
+  } //Rotate the needle
+
+
+  if (!resize && animate) {
+    needle.current.transition().delay(props.animDelay).ease(_d.easeElastic).duration(props.animateDuration).tween("progress", function () {
+      var currentPercent = (0, _d.interpolateNumber)(prevPercent, percent);
+      return function (percentOfPercent) {
+        var progress = currentPercent(percentOfPercent);
+        var centerPoint = calculateCircleNeedleLocation(progress, outerRadius, width);
+        return container.current.select(".needle circle").attr("cx", centerPoint[0]).attr("cy", centerPoint[1]);
+      };
+    });
+  } else {
+    var centerPoint = calculateCircleNeedleLocation(percent, outerRadius, width);
+    container.current.select(".needle circle").attr("cx", centerPoint[0]).attr("cy", centerPoint[1]);
+  }
+};
 
 var drawNeedle = function drawNeedle(resize, prevProps, props, width, needle, container, outerRadius, g) {
   var percent = props.percent,
@@ -279,6 +311,16 @@ var drawNeedle = function drawNeedle(resize, prevProps, props, width, needle, co
   }
 };
 
+var calculateCircleNeedleLocation = function calculateCircleNeedleLocation(percent, outerRadius, width) {
+  var needleLength = outerRadius.current * 0.9,
+      //TODO: Maybe it should be specified as a percentage of the arc radius?
+  needleRadius = 15 * (width.current / 500),
+      theta = percentToRad(percent),
+      centerPoint = [0, -needleRadius / 2],
+      topPoint = [centerPoint[0] - needleLength * Math.cos(theta), centerPoint[1] - needleLength * Math.sin(theta)];
+  return topPoint;
+};
+
 var calculateRotation = function calculateRotation(percent, outerRadius, width) {
   var needleLength = outerRadius.current * 0.55,
       //TODO: Maybe it should be specified as a percentage of the arc radius?
@@ -303,7 +345,7 @@ var addText = function addText(percentage, props, outerRadius, width, g) {
       fontSize = props.fontSize;
   var textPadding = 20;
   var text = formatTextValue ? formatTextValue(floatingNumber(percentage)) : floatingNumber(percentage) + "%";
-  g.current.append("g").attr("class", "text-group").attr("transform", "translate(".concat(outerRadius.current, ", ").concat(outerRadius.current / 2 + textPadding, ")")).append("text").text(text) // this computation avoid text overflow. When formatted value is over 10 characters, we should reduce font size
+  g.current.append("g").attr("class", "text-group").attr("transform", "translate(".concat(outerRadius.current, ", ").concat(outerRadius.current - textPadding, ")")).append("text").text(text) // this computation avoid text overflow. When formatted value is over 10 characters, we should reduce font size
   .style("font-size", function () {
     return fontSize ? fontSize : "".concat(width.current / 11 / (text.length > 10 ? text.length / 10 : 1), "px");
   }).style("fill", props.textColor).style("text-anchor", "middle");
